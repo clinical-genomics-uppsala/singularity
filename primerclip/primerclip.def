@@ -1,0 +1,17 @@
+BootStrap: yum
+OSVersion: 7
+MirrorURL: http://mirror.centos.org/centos-%{OSVERSION}/%{OSVERSION}/os/$basearch/
+Include: yum wget
+
+%environment
+    PATH=$PATH:/usr/local/bin/primerclip
+
+%setup
+
+%post
+    wget https://github.com/swiftbiosciences/primerclip/blob/master/.stack-work/install/x86_64-linux/lts-11.0/8.2.2/bin/primerclip -O /usr/local/bin/primerclip
+    chmod a+x /usr/local/bin/primerclip
+%files
+
+%apprun primerclip
+    exec primerclip "$@"

@@ -1,0 +1,36 @@
+BootStrap: yum
+OSVersion: 7
+MirrorURL: http://mirror.centos.org/centos-%{OSVERSION}/%{OSVERSION}/os/$basearch/
+Include: yum wget
+
+%environment
+    TERM=xterm
+%setup
+
+%post
+    rpm -Uvh https://packages.microsoft.com/config/rhel/7/packages-microsoft-prod.rpm
+    yum update -y
+    yum install -y libunwind libicu
+    yum install -y dotnet-hosting-2.0.3
+    yum install -y wget tar bzip2
+
+#    yum install -y lttng-ust libcurl openssl-libs krb5-libs libicu zlib
+
+    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    bash miniconda.sh -b -u -p /usr
+    hash -r
+    conda config --set always_yes yes --set changeps1 no
+
+#    wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
+#    chmod +x dotnet-install.sh
+#    TERM=xterm && ./dotnet-install.sh -c 2.0.3
+
+    conda install -c bioconda pisces=5.2.9.122
+
+%files
+
+%runscript
+    exec echo "This container can be run with --app pisces"
+
+%apprun pisces
+    exec pisces "$@" 

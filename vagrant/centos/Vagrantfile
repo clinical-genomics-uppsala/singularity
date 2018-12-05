@@ -1,0 +1,46 @@
+#Define the list of machines
+machines = {
+    :centostestserver => {
+        :hostname => "capsbuildserver",
+        :ipaddress => "10.10.10.60",
+    },
+}
+
+#Provisioning inline script
+$script = <<SCRIPT
+sudo yum install -y epel-release
+sudo yum update -y  ca-certificates 
+yum install -y singularity
+SCRIPT
+
+# Script for bootstraping the keys to the virtual
+# machines.
+require_relative "../vagrant/key_authorization.rb"
+
+VAGRANT_API_VERSION = "2"
+
+Vagrant.configure(VAGRANT_API_VERSION) do |global_config|
+    machines.each_pair do |name, options|
+        global_config.vm.define name do |config|
+            #VM configurations
+            config.vm.box = "centos/7"
+            config.vm.hostname = "#{name}"
+            config.vm.network :private_network, ip: options[:ipaddress]
+
+            authorize_key(config, 'root', '~/.ssh/id_rsa.pub', '~/.ssh/id_rsa.pub')
+
+            #VM specifications
+            config.vm.provider :virtualbox do |v|
+                v.customize ["modifyvm", :id, "--memory", "512"]
+                # Add a virtual disk to use for data/mirroring
+#                v.customize ['createhd', '--filename', "./#{name}_data_disk.vmdk", '--format', 'VMDK', '--size', 100024]
+#                v.customize ['storageattach', :id, '--storagectl', 'IDE Controller', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', "./#{name}_data_disk.vmdk"]
+            end
+
+            #VM provisioning
+            config.vm.provision :shell,
+                :inline => $script
+        end
+    end
+end
+
